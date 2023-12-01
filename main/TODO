@@ -1,3 +1,6 @@
+
+"dev": "vite dev --host IP",
+
 [ X ] - Figure out how to use onSnapshot for live messaging 
             -more specifically, how to create an element before
             the document(page) has loaded, or how to delay making

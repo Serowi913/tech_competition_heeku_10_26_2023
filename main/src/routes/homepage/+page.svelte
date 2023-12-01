@@ -1,7 +1,6 @@
 <script>
 
     import { browser } from "$app/environment";
-    import { auth } from "$lib/firebase";
 
     if (browser) {
         document.body.style.backgroundColor = "white";
@@ -11,12 +10,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>「 Apollo 」 | Homepage</title>
+    <title>「 Heeku 」 | Homepage</title>
 </head>
 <body>
 
     <header>
-        <h1>Apollo</h1>
+        <h1>Heeku</h1>
     </header>
 
     <div id="chatroom_links">

@@ -4,7 +4,7 @@
     import { auth, db } from "$lib/firebase";
     import { goto } from "$app/navigation";
     import { browser } from "$app/environment";
-    import { setDoc, collection, doc } from "firebase/firestore";
+    import { setDoc, collection, doc, getDoc } from "firebase/firestore";
 
     let loggingIn = true;
     let logInError = "";
@@ -39,7 +39,10 @@
             .then((userCredential) => {
                 const user = userCredential.user;
                 localStorage.setItem("userId", user.uid);
-                goto("/homepage", {replaceState: true});
+                getDoc(doc(db, "users", user.uid)).then((fdoc) => {
+                    localStorage.setItem("username", fdoc.data()['username']);
+                    goto("/homepage", {replaceState: true});
+                })
             })
             .catch((error) => {
                 console.log(error.code);

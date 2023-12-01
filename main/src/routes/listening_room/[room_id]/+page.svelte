@@ -1,7 +1,8 @@
 <script>
     import { db } from "$lib/firebase";
-    import { collection, addDoc, onSnapshot, doc, deleteDoc, getDocs, updateDoc, arrayUnion, arrayRemove, getDoc } from "firebase/firestore";
+    import { collection, addDoc, onSnapshot, doc, deleteDoc, getDocs, updateDoc, arrayUnion, arrayRemove, getDoc, query, orderBy } from "firebase/firestore";
     import { onMount } from "svelte";
+    import Roommate from "./Roommate.svelte";
     import pop_ids from "$lib/video_ids/pop_ids.json";
 
     import { page } from '$app/stores'
@@ -11,15 +12,7 @@
         users: arrayUnion(localStorage.getItem("username"))
     });
 
-    // getDocs(collection(db, "room_" + roomId)).then((snapshot) => {
-    //     snapshot.docs.forEach((fdoc) => {
-    //         if (fdoc.id != "users_present") {
-    //             deleteDoc(doc(db, "room_" + roomId, fdoc.id));
-    //         }
-    //     });
-    // });
-
-    let videoWidth = 775;
+    let videoWidth = 600;
     let username = localStorage.getItem("username");
     let allMessages = [];
     let usersPresent = [];
@@ -37,23 +30,66 @@
         }
     }
 
+    function nextSong() {
+        let randomNum = Math.floor(Math.random() * pop_ids['ids'].length);
+        let nvid = pop_ids['ids'][randomNum]['id'];
+        let nartist = pop_ids['ids'][randomNum]['artist'];
+
+        updateDoc(doc(db, "room_" + roomId, "video_id"), {
+            id: nvid,
+            artist: nartist
+        }).then(() => {
+            makeNewVideo();
+        });
+
+    }
+
     function messageSubmit() {
         let message = document.getElementById("chat_input").value;
-        // If the message is empty, don't do anything
+        // If the input is empty, don't do anything
         if (message == "") {
 
         } else {
             // If there is a message (censoring would occur before this)
             addDoc(collection(db, "room_" + roomId), {
                 username: username,
-                message: document.getElementById("chat_input").value
+                message: document.getElementById("chat_input").value,
+                time: Math.floor(new Date().getTime() / 1000)
             }).then(() => {
                 // When the message is delivered, clear the input field
                 document.getElementById("chat_input").value = "";
             });
         }
     }
-    
+
+    // Function for regenerating the iframe element when the video_id changes
+    function createVideo() {
+        let videoFrame = document.createElement("iframe");
+        videoFrame.id = "video_frame";
+        videoFrame.title = "YouTube: ";
+        videoFrame.width = videoWidth;
+        videoFrame.height = 445;
+        videoFrame.src = "https://www.youtube.com/embed/" + videoId;
+        document.getElementById("frame_div").appendChild(videoFrame);
+        makeNewVideo = false;
+    }
+
+    // Creates the element(s) that displays the users in the room (a.k.a. "roommates")
+    function createRoommate(name) {
+        if (name != username) {
+            // let nr = document.createElement("span");
+            // nr.innerHTML = name;
+            // nr.className = "roommate";
+            // nr.id = name;
+            // document.getElementById("roommates").appendChild(nr);
+            let newRoommate = new Roommate({
+                target: document.getElementById("roommates")
+            });
+
+            newRoommate.username = name;
+        }
+    }
+
     function onTabClose() {
         // Stop onSnapshot from updating
         disableSnapshot = true;
@@ -63,16 +99,7 @@
             users: arrayRemove(localStorage.getItem("username"))
         });
 
-        // If the room is now empty. . .
-        if (usersPresent.length == 0) {
-            // . . . clear the video_id field
-
-            // ***Not sure if this works, but it's not really needed anyways***
-
-            updateDoc(doc(db, "room_" + roomId, "video_id"), {
-                id: ""
-            });
-        }
+        usersPresent = [];
 
         // Get the users_present in the room
         getDoc(doc(db, "room_" + roomId, "users_present")).then((fdoc) => {
@@ -100,40 +127,19 @@
 
     };
 
-    // Function for regenerating the iframe element when the video_id changes
-    function createVideo() {
-        let videoFrame = document.createElement("iframe");
-        videoFrame.id = "video_frame";
-        videoFrame.title = "YouTube: ";
-        videoFrame.width = videoWidth;
-        videoFrame.height = 445;
-        videoFrame.src = "https://www.youtube.com/embed/" + videoId;
-        document.getElementById("frame_span").appendChild(videoFrame);
-        makeNewVideo = false;
-    }
-
-    // Creates the element(s) that displays the users in the room (a.k.a. "roommates")
-    function createRoommate(name) {
-        if (name != username) {
-            let nr = document.createElement("span");
-            nr.innerHTML = name;
-            nr.className = "roommate";
-            nr.id = name;
-            document.getElementById("roommates").appendChild(nr);
-        }
-    }
 
     // When the page is loaded
     onMount(() => {
-        videoWidth = window.screen.width / 2 - 20;
+        // videoWidth = window.screen.width / 2 - 20;
         let chatDiv = document.getElementById("chat");
-        let rommates = document.getElementById("roommates");
+        let roommates = document.getElementById("roommates");
 
         // Calls whenever data in the specified collection is modified
-        onSnapshot(collection(db, 'room_' + roomId), (snapshot) => {
+        onSnapshot(query(collection(db, 'room_' + roomId), orderBy("time")) , (snapshot) => {
             // If snapshot isn't disabled
             if (!disableSnapshot) {
                 snapshot.docs.forEach((fdoc) => {
+                    console.log(fdoc.id)
                     if (fdoc.id == "users_present") {
                         // Nothing.
                     } else if (fdoc.id == "video_id") {
@@ -142,13 +148,16 @@
                         if (fdoc.data()['id'] != videoId && fdoc.data()['id'] != "") {
                             // Set the videoId in this file to the new id
                             videoId = fdoc.data()['id'];
+                            artist = fdoc.data()['artist'];
                             makeNewVideo = true;
                         } else if (fdoc.data()['id'] == "") {
                             // If the id in the document is empty, create a new id and set that as the id in the document
                             let randomNum = Math.floor(Math.random() * pop_ids['ids'].length);
                             let nvid = pop_ids['ids'][randomNum]['id'];
+                            let nartist = pop_ids['ids'][randomNum]['artist'];
                             updateDoc(doc(db, "room_" + roomId, "video_id"), {
-                                id: nvid
+                                id: nvid,
+                                artist: nartist
                             });
                         }
 
@@ -179,15 +188,25 @@
         // Calls whenever the users_present array changes
         onSnapshot(doc(db, "room_" + roomId, "users_present"), (snapshot) => {
             let snapUsers = snapshot.data()['users']; 
-
             // For each user_present in this file's array,
             // if it's not in the users_present in the doc
             // (snap users), that means that the user left
             // the room, so we delete them from the roommates
             // list (by getting the element by id and removing it)
-            usersPresent.forEach((u) => {
-                if (!snapUsers.includes(u)) {
-                    document.getElementById(u).remove();
+            // usersPresent.forEach((u) => {
+            //     if (!snapUsers.includes(u)) {
+            //         document.getElementById(u).remove();
+
+            //         usersPresent.splice(usersPresent.indexOf(u), 1);
+            //     }
+            // });
+            console.log(usersPresent);
+            console.log(snapUsers);
+
+            usersPresent.forEach((u1) => {
+                if (!(snapUsers.includes(u1))) {
+                    document.getElementById(u1).remove();
+                    usersPresent.splice(usersPresent.indexOf(u1), 1);
                 }
             });
             
@@ -197,8 +216,7 @@
             // that means that someone joined, so we need
             // to add them to the roommates list
             snapUsers.forEach((u) => {
-                if (!usersPresent.includes(u)) {
-                    console.log("new user joined.");
+                if (!usersPresent.includes(u) && !(document.getElementById(u))) {
                     createRoommate(u);
                     usersPresent.push(u);
                 }
@@ -212,20 +230,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>「 Apollo 」 | Room {roomId}</title>
+    <title>「 Heeku 」 | Room {roomId}</title>
 </head>
 <body>
     <div id="top_bar">
-        <h1>Pollo</h1>
+        <span id="title_header"><h1><a href="../homepage" on:click={onTabClose} data-sveltekit-replacestate>Heeku</a></h1></span>
         <span id="return_wrapper"><a href="../homepage" on:click={onTabClose} data-sveltekit-replacestate><button id="return_button">Return</button></a></span>
     </div>
 
     <div id="content_wrapper">
         <div id="youtube_div">
-            <span id="frame_span">
+            <div id="frame_div">
                 <!-- <iframe title="YouTube:" id="video_frame" width="{videoWidth}" height="445" src="https://www.youtube.com/embed/{videoId}"></iframe> -->
                 <!--                    https://www.w3schools.com/howto/howto_css_responsive_iframes.asp                     -->
-            </span>
+            </div>
+
+            <div id="song_options">
+                <span id="next_song_wrapper">
+                    <button id="next_song_button" on:click|preventDefault={nextSong}>Next song</button>
+                </span>
+            </div>
 
             <div id="song_data_div">
                 <ul id="song_data_list">
@@ -237,7 +261,6 @@
                     -->
                 </ul>
             </div>
-
         </div>
 
         <div id="chat_div">
@@ -258,7 +281,9 @@
             </div>
             
         </div>
+
     </div>
+
 </body>
 
 <svelte:window on:beforeunload={onTabClose}/>
@@ -278,6 +303,10 @@
         border-bottom: 2px solid rgb(230, 230, 230);
     }
 
+    #title_header a {
+        text-decoration: none;
+    }
+
     #return_wrapper {
         position: absolute;
         right: 0;
@@ -291,6 +320,26 @@
     #content_wrapper {
         display: flex;
         flex-wrap: wrap;
+    }
+
+    #youtube_div {
+        background-color: lightblue;
+        padding: 10px 10px 0px 10px;
+        border: 3px outset rgb(146, 189, 203);
+    }
+
+    #song_data_div {
+        display: inline-block;
+    }
+
+    #next_song_wrapper {
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    #next_song_wrapper button {
+        height: 40px;
+        flex-grow: 1;
     }
 
     #video_frame {
@@ -333,68 +382,3 @@
     }
 
 </style>
-
-<!--
-#youtube_div {
-    height: 100%;
-    width: 50%;
-    float: left;
-}
-
-#chat_wrapper {
-    position: absolute;
-    left: 50%;
-    float: left;
-    width: 48%;
-    margin-left: 8px;
-    padding-left: 4px;
-    padding-bottom: 320px;
-    border-style: solid;
-    border-width: 4px;
-}
-
-#chat_wrapper h1 {
-    border-bottom-style: solid;
-    border-bottom-width: 2px;
-}
-
-#chat {
-    width: 200%;
-    overflow-y: scroll;
-    margin-left: 20px;
-    max-width: 100%;
-    max-height: 70%;
-}
-
-#chat_input {
-    position: absolute;
-    display: inline-block;
-    bottom: 1%;
-    left: 60px;
-    width: 60%;
-}
-
-#send_button {
-    position: absolute;
-    display: inline-block;
-    bottom: 1%;
-}
-
-#youtube_frame {
-    width: 100%;
-    border-style: none;
-}
-
-#song_data_div {
-    background-color: lightpink;
-}
-
-#song_data_list {
-    list-style-type: none;
-    margin-left: -34px;
-}
-
-#song_data_list li {
-    padding: 4px 0px 8px 0px;
-}
--->
