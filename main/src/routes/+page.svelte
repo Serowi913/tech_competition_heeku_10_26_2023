@@ -6,6 +6,7 @@
     import { browser } from "$app/environment";
     import { setDoc, collection, doc, getDoc } from "firebase/firestore";
 
+
     let loggingIn = true;
     let logInError = "";
     let submittingLogIn = false;
@@ -21,7 +22,7 @@
     ]
 
     // Signs out the user if they're logged in
-    auth.signOut().then(() => { console.log("we gone.") });
+    auth.signOut().then(() => {  });
 
     function logInSubmit (e) {
         let form = document.getElementById("log_in_form");
@@ -43,10 +44,10 @@
                     localStorage.setItem("username", fdoc.data()['username']);
                     goto("/homepage", {replaceState: true});
                 })
-            })
-            .catch((error) => {
+            }).catch((error) => {
                 console.log(error.code);
                 console.log(error.message);
+                submittingLogIn = false;
                 if (error.code == "auth/invalid-email") {
                     logInError = "Invalid Email.";
                 } else if (error.code == "auth/invalid-login-credentials") {
@@ -97,6 +98,8 @@
 
     if (browser) {
         document.body.style.backgroundImage = "none"
+        document.body.style.backgroundColor = "rgb(79, 79, 79)";
+        
         //document.body.style.backgroundColor = "rgb(79, 79, 79)";
         //document.body.style.backgroundColor = 'rgb(241, 252, 255)';
     }
@@ -105,7 +108,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>「 Apollo 」</title>
+    <title>「 Heeku 」</title>
 </head>
 <body>
 

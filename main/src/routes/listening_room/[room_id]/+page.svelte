@@ -18,6 +18,8 @@
     let usersPresent = [];
     let makeNewVideo = false;
     let disableSnapshot = false;
+    let defaultSnapshot;
+    let usersPresentSnapshot;
 
     let randomNum = Math.floor(Math.random() * pop_ids['ids'].length);
 
@@ -38,9 +40,7 @@
         updateDoc(doc(db, "room_" + roomId, "video_id"), {
             id: nvid,
             artist: nartist
-        }).then(() => {
-            makeNewVideo();
-        });
+        }).then(() => {  });
 
     }
 
@@ -93,11 +93,13 @@
     function onTabClose() {
         // Stop onSnapshot from updating
         disableSnapshot = true;
+        defaultSnapshot();
+        usersPresentSnapshot();
 
         // Remove current user from the users_present array
         updateDoc(doc(db, "room_" + roomId, "users_present"), {
             users: arrayRemove(localStorage.getItem("username"))
-        });
+        }).then(() => {  });
 
         usersPresent = [];
 
@@ -109,12 +111,16 @@
                 getDocs(collection(db, "room_" + roomId)).then((snapshot) => {
                     // For each doc. . . 
                     snapshot.docs.forEach((fdoc) => {
-                        // If the doc isn't the users_present or video_id doc
-                        // *** If I end up making more essential docs like these,
-                        //     I'll make a list instead of the names of docs to
-                        //     exclude when deleting, but for now it makes more
-                        //     sense to just check if the doc isn't these two ***
-                        if (fdoc.id != "users_present" && fdoc.id != "video_id") {
+                        if (!(roomId.length > 2)) { // If the room is one of the main 10 rooms
+                            // If the doc isn't the users_present or video_id doc
+                            // *** If I end up making more essential docs like these,
+                            //     I'll make a list instead of the names of docs to
+                            //     exclude when deleting, but for now it makes more
+                            //     sense to just check if the doc isn't these two ***
+                            if (fdoc.id != "users_present" && fdoc.id != "video_id") {
+                                deleteDoc(doc(db, "room_" + roomId, fdoc.id));
+                            }
+                        } else {
                             deleteDoc(doc(db, "room_" + roomId, fdoc.id));
                         }
                     });
@@ -135,11 +141,10 @@
         let roommates = document.getElementById("roommates");
 
         // Calls whenever data in the specified collection is modified
-        onSnapshot(query(collection(db, 'room_' + roomId), orderBy("time")) , (snapshot) => {
+        defaultSnapshot = onSnapshot(query(collection(db, 'room_' + roomId), orderBy("time")) , (snapshot) => {
             // If snapshot isn't disabled
             if (!disableSnapshot) {
                 snapshot.docs.forEach((fdoc) => {
-                    console.log(fdoc.id)
                     if (fdoc.id == "users_present") {
                         // Nothing.
                     } else if (fdoc.id == "video_id") {
@@ -186,23 +191,13 @@
         });
 
         // Calls whenever the users_present array changes
-        onSnapshot(doc(db, "room_" + roomId, "users_present"), (snapshot) => {
+        usersPresentSnapshot = onSnapshot(doc(db, "room_" + roomId, "users_present"), (snapshot) => {
             let snapUsers = snapshot.data()['users']; 
             // For each user_present in this file's array,
             // if it's not in the users_present in the doc
             // (snap users), that means that the user left
             // the room, so we delete them from the roommates
             // list (by getting the element by id and removing it)
-            // usersPresent.forEach((u) => {
-            //     if (!snapUsers.includes(u)) {
-            //         document.getElementById(u).remove();
-
-            //         usersPresent.splice(usersPresent.indexOf(u), 1);
-            //     }
-            // });
-            console.log(usersPresent);
-            console.log(snapUsers);
-
             usersPresent.forEach((u1) => {
                 if (!(snapUsers.includes(u1))) {
                     document.getElementById(u1).remove();
@@ -246,8 +241,9 @@
             </div>
 
             <div id="song_options">
-                <span id="next_song_wrapper">
+                <span id="song_options_buttons">
                     <button id="next_song_button" on:click|preventDefault={nextSong}>Next song</button>
+                    <button id="video_link_button"><a href="https://youtu.be/{videoId}" target="_blank">Go to YouTube</a></button>
                 </span>
             </div>
 
@@ -332,14 +328,19 @@
         display: inline-block;
     }
 
-    #next_song_wrapper {
+    #song_options_buttons {
         display: flex;
         flex-wrap: wrap;
     }
 
-    #next_song_wrapper button {
+    #song_options_buttons button {
         height: 40px;
-        flex-grow: 1;
+        flex: 1 1 0px;
+    }
+
+    #video_link_button a {
+        text-decoration: none;
+        color: black;
     }
 
     #video_frame {
