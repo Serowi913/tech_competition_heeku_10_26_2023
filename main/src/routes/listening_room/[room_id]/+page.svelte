@@ -4,9 +4,11 @@
     import { onMount } from "svelte";
     import Roommate from "./Roommate.svelte";
     import pop_ids from "$lib/video_ids/pop_ids.json";
+    import gospel_rock_ids from "$lib/video_ids/gospel_rock_ids.json";
 
     import { page } from '$app/stores'
     const roomId = $page.params.room_id;
+    let roomGenre = pop_ids;
 
     updateDoc(doc(db, "room_" + roomId, "users_present"), {
         users: arrayUnion(localStorage.getItem("username"))
@@ -21,10 +23,10 @@
     let defaultSnapshot;
     let usersPresentSnapshot;
 
-    let randomNum = Math.floor(Math.random() * pop_ids['ids'].length);
+    let randomNum = Math.floor(Math.random() * roomGenre['ids'].length);
 
-    let artist = pop_ids['ids'][randomNum]['artist'];
-    let videoId = "MfqI-W_JRQQ"; //pop_ids['ids'][randomNum]['id'];
+    let artist = roomGenre['ids'][randomNum]['artist'];
+    let videoId = "MfqI-W_JRQQ"; //roomGenre['ids'][randomNum]['id'];
 
     function keyPressed(event) {
         if (event.key == "Enter") {
@@ -33,9 +35,9 @@
     }
 
     function nextSong() {
-        let randomNum = Math.floor(Math.random() * pop_ids['ids'].length);
-        let nvid = pop_ids['ids'][randomNum]['id'];
-        let nartist = pop_ids['ids'][randomNum]['artist'];
+        let randomNum = Math.floor(Math.random() * roomGenre['ids'].length);
+        let nvid = roomGenre['ids'][randomNum]['id'];
+        let nartist = roomGenre['ids'][randomNum]['artist'];
 
         updateDoc(doc(db, "room_" + roomId, "video_id"), {
             id: nvid,
@@ -136,6 +138,9 @@
 
     // When the page is loaded
     onMount(() => {
+        document.body.style.backgroundImage = "none"
+        document.body.style.backgroundColor = "rgb(79, 79, 79)";
+
         // videoWidth = window.screen.width / 2 - 20;
         let chatDiv = document.getElementById("chat");
         let roommates = document.getElementById("roommates");
@@ -157,9 +162,9 @@
                             makeNewVideo = true;
                         } else if (fdoc.data()['id'] == "") {
                             // If the id in the document is empty, create a new id and set that as the id in the document
-                            let randomNum = Math.floor(Math.random() * pop_ids['ids'].length);
-                            let nvid = pop_ids['ids'][randomNum]['id'];
-                            let nartist = pop_ids['ids'][randomNum]['artist'];
+                            let randomNum = Math.floor(Math.random() * roomGenre['ids'].length);
+                            let nvid = roomGenre['ids'][randomNum]['id'];
+                            let nartist = roomGenre['ids'][randomNum]['artist'];
                             updateDoc(doc(db, "room_" + roomId, "video_id"), {
                                 id: nvid,
                                 artist: nartist
@@ -230,11 +235,13 @@
 <body>
     <div id="top_bar">
         <span id="title_header"><h1><a href="../homepage" on:click={onTabClose} data-sveltekit-replacestate>Heeku</a></h1></span>
-        <span id="return_wrapper"><a href="../homepage" on:click={onTabClose} data-sveltekit-replacestate><button id="return_button">Return</button></a></span>
+        <span id="return_wrapper"><a href="../homepage" on:click={onTabClose} data-sveltekit-replacestate><button id="return_button"><span>Return</span></button></a></span>
+        <span id="room_id_span">Room ID: {roomId}</span>
     </div>
 
     <div id="content_wrapper">
         <div id="youtube_div">
+            <!--<span>{videoId}</span>-->
             <div id="frame_div">
                 <!-- <iframe title="YouTube:" id="video_frame" width="{videoWidth}" height="445" src="https://www.youtube.com/embed/{videoId}"></iframe> -->
                 <!--                    https://www.w3schools.com/howto/howto_css_responsive_iframes.asp                     -->
@@ -301,6 +308,7 @@
 
     #title_header a {
         text-decoration: none;
+        color: white;
     }
 
     #return_wrapper {
@@ -309,8 +317,60 @@
         top: 34px;
     }
 
+    #room_id_span {
+        position: absolute;
+        left: 15px;
+        top: 34px;
+        color: white;
+    }
+
     #return_button {
+        display: inline-block;
+        border-radius: 4px;
+        background-color: #eee;
         border: none;
+        color: black;
+        text-align: center;
+        font-size: 15px;
+        width: 100px;
+        height: 40px;
+        transition: all 0.5s;
+        cursor: pointer;
+        position: relative;
+        top: -20px;
+        right: 16px;
+        /* border: none;
+        margin-right: 16px; */
+    }
+
+    #return_button:hover{
+        background-color: #ccc;
+    }
+
+    #return_button span {
+        text-align: center;
+        cursor: pointer;
+        display: inline-block;
+        position: relative;
+        transition: 0.5s;
+    }
+
+    #return_button span:after {
+        content: '\00AB';
+        position: absolute;
+        opacity: 0;
+        top: 0;
+        left: -20px;
+        transition: 0.5s;
+    }
+
+    #return_button:hover span {
+        padding-left: 20px;
+    }
+
+    #return_button:hover span:after {
+        opacity: 1;
+        left: 0;
     }
 
     #content_wrapper {
@@ -319,7 +379,7 @@
     }
 
     #youtube_div {
-        background-color: lightblue;
+        background-color: aqua;
         padding: 10px 10px 0px 10px;
         border: 3px outset rgb(146, 189, 203);
     }
@@ -348,10 +408,13 @@
     }
 
     #chat_div {
+        background-color: white;
         margin-left: 10px;
         padding-left: 10px;
         flex-grow: 1;
-        border: 2px solid whitesmoke;
+        border: 3px outset rgb(146, 189, 203);
+        border-color: aqua rgb(144, 0, 255) rgb(144, 0, 255) aqua;
+
     }
 
     #chat_header {

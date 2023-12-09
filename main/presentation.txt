@@ -1,0 +1,27 @@
+Ideation: We brainstormed what apps we felt didn't exist and needed to be created, as well as issues that we felt we could solve.
+
+
+Reason for project:
+
+Interacting and connecting with strangers can be a difficult task for anyone. Therefore, we wanted to make an app that is able to connect people through humanity's universal language: Music.
+
+
+Planning:
+
+The first thing I had to figure out was how to have music present on the app. The source we decided on was YouTube, since they have music freely available to be consumed, as well as a method for emeding YouTube videos in websites. This meant that we would have to figure out how to pull only music videos from YouTube.When thinking of what to use for the webapp itself, I knew I needed 2 things: A front end to handle everything that the user sees and interacts with, and a backend to handle things that the user doesn't see such as authentication and processing messages. I decided on using Svelte and Sveltekit for my frontent, and Google Firebase for my backend.
+
+Front-end explained:
+
+Typically when making webapps, instead of building the front-end completely from scratch, meaning using nothing but vanilla javascript and html, developers will use frameworks, which make combining javascript and html and creating user interaces much easier and much more natural. When researching what frontend to use, I considered many popular frameworks such as AngularJS, React, and Svelte, and since I wanted a framework that was built with usability and the developer in mind, I decided on Svelte.
+
+Reason for choosing Svelte:
+
+I chose Svelte over other frameworks like AngularJS and React because of two things: how developer-friendly it is and how fast it is. I knew our app wouldn't have more than a few pages, which meant that svelte was perfect due to how fast, how easily, and how cleanly it could navigate through different pages (referred to as routes in svelte). Though not literally, svelte also seamlessly integrates javascript with the html, with features such as if statements within the HTML and referencing varaibles directly in the HTML. These features make writing HTML feel less like a scripting language and more like a coding language that's one with javscript, allowing me to easily write the pages and features of the app.
+
+Reason for choosing Firebase:
+
+When choosing a backend, I decided on using Google's Firebase because I already had previous expereince with it. Firebase is considered a Backend-as-a-Service (Baas), which means that it provides multiple services for developers to use for the backend of their app, such as user authentication for loggin user in and signing users up and a noSQL database for storing and pulling data. I knew that I could use Firebase's authentication to make accounts for the user, and the database to store messages, so I immediately chose it as my backend service.
+
+Development:
+
+I began by structuring the listening room, which would be the page where users would listen to a song and be able to chat about it. Then, using python I worte a script that used the YouTube API to generate a JSON file that has the various video IDs of music videos of a specific genre. After that, I placed the JSON file in the app's files. Next, I figured out how to send and store messages using Firebase's Firestore. Firebase is organized into collections and documents, with collections storing documents, and documents storing data of various types as well as sub-collections. Once the user types the message, I structured the document within the code with the user's username and the message itself. I then sent this to the collection that corresponds with the listening room that the user is in, where Firestore stores the message as a document. These documents are then automatically searched through by the clients in the same room, and added to the document. After that, I added functionality for changing to a new song within the room. Lastly, I added the ability to create custom rooms of a specific genre, leaving 10 rooms accessible from the homepage that anyone can join.

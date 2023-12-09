@@ -7,6 +7,7 @@
     import { generate } from "$lib/globalFunctions";
 
     let creatingRoom = false;
+    let joinCustomRoomError = "";
 
     function logOut() {
         auth.signOut().then(() => {
@@ -18,13 +19,20 @@
         let customRoomInput = document.getElementById("join_room_input");
         let customRoomId = customRoomInput.value;
         let errorMessage = document.getElementById("join_room_error_message");
-        getDocs(collection(db, "room_" + customRoomId)).then((snapshot) => {
-            if (snapshot.docs.length == 0) {
-                errorMessage.hidden = false;
-            } else {
-                goto("/listening_room/" + customRoomId)
-            }
-        });
+
+        if (customRoomId.length < 8) {
+            joinCustomRoomError = "Invalid room ID";
+            errorMessage.hidden = false;
+        } else {
+            getDocs(collection(db, "room_" + customRoomId)).then((snapshot) => {
+                if (snapshot.docs.length == 0) {
+                    joinCustomRoomError = "Room does not exist";
+                    errorMessage.hidden = false;
+                } else {
+                    goto("/listening_room/" + customRoomId)
+                }
+            });
+        }
     }
 
     function createRoomSubmit() {
@@ -50,7 +58,8 @@
     }
 
     if (browser) {
-        document.body.style.backgroundColor = "white";
+        document.body.style.backgroundImage = "none"
+        document.body.style.backgroundColor = "rgb(79, 79, 79)";
     }
 
 </script>
@@ -66,16 +75,16 @@
     </header>
 
     <div id="chatroom_links">
-        <div class="room_link" id="room_1"><a href="/listening_room/1" data-sveltekit-replacestate><button>Room I</button></a></div>
-        <div class="room_link" id="room_2"><a href="/listening_room/2" data-sveltekit-replacestate><button>Room II</button></a></div>
-        <div class="room_link" id="room_3"><a href="/listening_room/3" data-sveltekit-replacestate><button>Room III</button></a></div>
-        <div class="room_link" id="room_4"><a href="/listening_room/4" data-sveltekit-replacestate><button>Room IV</button></a></div>
-        <div class="room_link" id="room_5"><a href="/listening_room/5" data-sveltekit-replacestate><button>Room V</button></a></div>
-        <div class="room_link" id="room_6"><a href="/listening_room/6" data-sveltekit-replacestate><button>Room VI</button></a></div>
-        <div class="room_link" id="room_7"><a href="/listening_room/7" data-sveltekit-replacestate><button>Room VII</button></a></div>
-        <div class="room_link" id="room_8"><a href="/listening_room/8" data-sveltekit-replacestate><button>Room VIII</button></a></div>
-        <div class="room_link" id="room_9"><a href="/listening_room/9" data-sveltekit-replacestate><button>Room IX</button></a></div>
-        <div class="room_link" id="room_10"><a href="/listening_room/10" data-sveltekit-replacestate><button>Room X</button></a></div>
+        <div class="room_link" id="room_1"><a href="/listening_room/1" data-sveltekit-replacestate><button class="room_button rb_a">Room I</button></a></div>
+        <div class="room_link" id="room_2"><a href="/listening_room/2" data-sveltekit-replacestate><button class="room_button rb_b">Room II</button></a></div>
+        <div class="room_link" id="room_3"><a href="/listening_room/3" data-sveltekit-replacestate><button class="room_button rb_a">Room III</button></a></div>
+        <div class="room_link" id="room_4"><a href="/listening_room/4" data-sveltekit-replacestate><button class="room_button rb_b">Room IV</button></a></div>
+        <div class="room_link" id="room_5"><a href="/listening_room/5" data-sveltekit-replacestate><button class="room_button rb_a">Room V</button></a></div>
+        <div class="room_link" id="room_6"><a href="/listening_room/6" data-sveltekit-replacestate><button class="room_button rb_b">Room VI</button></a></div>
+        <div class="room_link" id="room_7"><a href="/listening_room/7" data-sveltekit-replacestate><button class="room_button rb_a">Room VII</button></a></div>
+        <div class="room_link" id="room_8"><a href="/listening_room/8" data-sveltekit-replacestate><button class="room_button rb_b">Room VIII</button></a></div>
+        <div class="room_link" id="room_9"><a href="/listening_room/9" data-sveltekit-replacestate><button class="room_button rb_a">Room IX</button></a></div>
+        <div class="room_link" id="room_10"><a href="/listening_room/10" data-sveltekit-replacestate><button class="room_button rb_b">Room X</button></a></div>
     </div>
 
     <div id="custom_room_options">
@@ -83,7 +92,7 @@
             <label for="join_room_input">Join Room: </label>
             <input id="join_room_input" type="text"/>
             <button id="join_room_button" on:click={joinCustomRoom}>Join</button>
-            <span id="join_room_error_message" hidden="true">Room does not exist</span>
+            <span id="join_room_error_message" hidden="true">{joinCustomRoomError}</span>
         </div>
 
         <div id="create_room_wrapper">
@@ -110,7 +119,7 @@
                 <label for="genre_dropdown">Genre: </label>
                 <select name="genre_select" id="genre_dropdown">
                     <option>Pop</option>
-                    <option>Rock</option>
+                    <option>Gospel Rock</option>
                 </select>
 
                 <button id="create_room_submit">Create room</button>
@@ -121,7 +130,7 @@
 
     </div>
 
-    <button id="logout_button" on:click={logOut}>Log out</button>
+    <div id="logout_wrapper"><button id="logout_button" on:click={logOut}>Log out</button></div>
 
 </body>
 
@@ -138,11 +147,17 @@
     }
 
     header {
-        border-bottom: 2px solid black;
+        position: absolute;
+        left: 0;
+        top: 0;
+        right: 0;
+        background-color: rgb(144, 0, 255);
+        border-bottom: 7px solid rgb(120, 0, 200);
     }
 
     header h1 {
         text-align: center;
+        color: white;
     }
 
     #chatroom_links {
@@ -154,31 +169,49 @@
         align-content: flex-end;
         border-bottom: 2px solid black;
         padding-bottom: 20px;
+        margin-top: 80px;
     }
 
     .room_link {
         flex: 1 1 0px;
     }
 
-    .room_link a button {
+    .room_button {
         width: 100%;
         height: 50px;
         padding-top: 10px;
         padding-bottom: 10px;
         margin-top: 20px;
+        border-radius: 5px;
+    }
+
+    .room_button.rb_a {
+        border: 4px solid aqua;
+    }
+
+    .room_button.rb_b {
+        border: 4px solid rgb(144, 0, 255);
     }
 
     #custom_room_options {
         display: flex;
-        max-width: 50%;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        margin-top: 50px;
     }
 
     #custom_room_options div {
         flex: 1 1 0px;
-        width: auto;
+        max-width: 300px;
         height: 100px;
         text-align: center;
-        border: 2px solid black;
+        border: 4px solid rgb(180, 180, 180);
+        border-radius: 8px;
+        padding: 10px;
+        margin-left: 3px;
+        margin-right: 3px;
+        background-color: white;
     }
 
     #creating_room_wrapper {
@@ -217,10 +250,15 @@
         font-style: italic;
     }
 
+    #logout_wrapper {
+        margin-top: 10px;
+        text-align: center;
+    }
+
     #logout_button {
-        position: absolute;
-        bottom: 1;
-        right: 0;
+        width: 150px;
+        height: 30px;
+        border: 2px outset black;
     }
 
 </style>
